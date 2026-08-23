@@ -1,0 +1,49 @@
+<style>
+  :root { --pink:#ff17c3; --blue:#00c7fe; }
+  html,body { margin:0; height:100%; background:#05050a; overflow:hidden;
+    font-family:'Rajdhani',ui-sans-serif,system-ui,sans-serif; color:#dfe4ff; }
+  #app { position:fixed; inset:0; }
+  .gl, .css3d { position:absolute; inset:0; }
+  .css3d { z-index:0; pointer-events:none; }
+  .gl { z-index:1; }
+  .dock { background:#000; overflow:hidden; border-radius:6px; }
+  #panel { position:fixed; z-index:5; left:16px; top:16px; width:236px; padding:14px;
+    background:rgba(12,10,20,.82); border:1px solid rgba(0,199,254,.35); border-radius:10px;
+    backdrop-filter:blur(8px); box-shadow:0 0 26px rgba(255,23,195,.16); }
+  #panel h1 { margin:0 0 2px; font-family:'Orbitron','Impact',ui-sans-serif,sans-serif; font-size:15px; letter-spacing:.14em;
+    color:#fff; text-shadow:0 0 12px var(--pink); }
+  #panel .sub { font-size:11px; opacity:.6; letter-spacing:.08em; margin-bottom:12px; }
+  label { display:block; font-size:11px; letter-spacing:.1em; text-transform:uppercase;
+    opacity:.65; margin:10px 0 4px; }
+  select, button, input[type=range] { width:100%; box-sizing:border-box; font-family:inherit; }
+  select, button { background:#171426; color:#dfe4ff; border:1px solid rgba(0,199,254,.35);
+    border-radius:6px; padding:7px 9px; font-size:13px; font-weight:600; cursor:pointer; }
+  button:hover, select:hover { border-color:var(--pink); box-shadow:0 0 12px rgba(255,23,195,.3); }
+  .row { display:flex; gap:8px; margin-top:10px; }
+  #caption { position:fixed; z-index:5; left:16px; bottom:14px; font-size:12px;
+    letter-spacing:.06em; opacity:.7; }
+  #hint { position:fixed; z-index:5; right:16px; bottom:14px; font-size:12px; opacity:.55; }
+  body.docked #hint::after { content:' · ESC to step back'; color:var(--pink); opacity:1; }
+  body:not(.ready) #app { opacity:0; }
+  #app { transition:opacity .5s; }
+  /* headless captures fire in ~2s; a fade would put every shot mid-transition */
+  body.shot #app { transition:none; }
+</style>
+<div id="app"></div>
+<div id="panel">
+  <h1>RCADIA</h1>
+  <div class="sub">cabinet rig · isolation</div>
+  <label for="game">Game</label>
+  <select id="game"></select>
+  <label for="modelsel">Chassis</label>
+  <select id="modelsel"></select>
+  <label for="bloom">Bloom</label>
+  <input id="bloom" type="range" min="0" max="2.5" step="0.05" value="1.0">
+  <label for="curve">CRT curve</label>
+  <input id="curve" type="range" min="0" max="0.4" step="0.01" value="0.14">
+  <div class="row"><button id="dock">Insert coin</button></div>
+  <div class="row"><button id="wire">Wireframe</button></div>
+</div>
+<div id="caption">loading…</div>
+<div id="hint">drag to orbit · scroll to zoom</div>
+<script>/*BUNDLE*/</script>

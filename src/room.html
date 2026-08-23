@@ -1,0 +1,147 @@
+<style>
+  :root {
+    --pink:#ff17c3; --blue:#00c7fe; --purple:#736eb0; --orange:#f37e3e;
+    --ui:'Rajdhani',ui-sans-serif,system-ui,-apple-system,sans-serif;
+    --hd:'Orbitron','Impact',ui-sans-serif,sans-serif;
+  }
+  * { box-sizing:border-box; }
+  html,body {
+    margin:0; height:100%; height:100dvh; background:#04030a; color:#dfe4ff;
+    font-family:var(--ui); overflow:hidden; overscroll-behavior:none;
+    -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent;
+  }
+  #app { position:fixed; inset:0; }
+  .gl, .css3d { position:absolute; inset:0; }
+  /* the CSS3D layer sits *under* the GL canvas until a game is docked, then is
+     lifted above it so clicks and keys reach the iframe */
+  .css3d { z-index:0; pointer-events:none; }
+  .gl { z-index:1; touch-action:none; display:block; }
+  .dock { background:#000; overflow:hidden; }
+
+  /* ---------------------------------------------------------- loading */
+  #boot { position:fixed; inset:0; z-index:40; display:grid; place-content:center;
+    gap:14px; text-align:center; background:#04030a; transition:opacity .6s; }
+  body.ready #boot { opacity:0; pointer-events:none; }
+  #boot h1 { margin:0; font-family:var(--hd); font-size:clamp(28px,7vw,54px);
+    letter-spacing:.22em; color:#fff; text-shadow:0 0 26px var(--pink), 0 0 60px var(--blue); }
+  #boot p { margin:0; font-size:13px; letter-spacing:.3em; opacity:.5; text-transform:uppercase; }
+  #boot .bar { width:min(240px,60vw); height:2px; margin:0 auto; overflow:hidden;
+    background:rgba(255,255,255,.08); }
+  #boot .bar i { display:block; width:40%; height:100%;
+    background:linear-gradient(90deg,transparent,var(--blue),var(--pink),transparent);
+    animation:sweep 1.15s infinite linear; }
+  @keyframes sweep { from{transform:translateX(-100%)} to{transform:translateX(350%)} }
+
+  /* ------------------------------------------------------- cabinet prompt */
+  #prompt { position:fixed; z-index:12; left:0; top:0; transform:translate(-50%,-140%);
+    padding:9px 16px; text-align:center; pointer-events:none; white-space:nowrap;
+    background:rgba(8,6,16,.82); border:1px solid rgba(0,199,254,.55); border-radius:9px;
+    box-shadow:0 0 26px rgba(0,199,254,.28); backdrop-filter:blur(6px);
+    opacity:0; transition:opacity .16s; }
+  #prompt.on { opacity:1; }
+  #prompt .title { font-family:var(--hd); font-size:14px; letter-spacing:.13em; color:#fff;
+    text-shadow:0 0 14px var(--pink); }
+  #prompt .hint { margin-top:3px; font-size:11px; letter-spacing:.22em; color:var(--blue); }
+  body.docked #prompt { display:none; }
+
+  /* ------------------------------------------------------------ reticle */
+  #dot { position:fixed; z-index:11; left:50%; top:50%; width:5px; height:5px; margin:-2.5px;
+    border-radius:50%; background:rgba(223,228,255,.55); pointer-events:none;
+    box-shadow:0 0 8px rgba(0,199,254,.7); transition:opacity .2s; }
+  body.docked #dot, body.bare #dot, body.coarse #dot { opacity:0; }
+
+  /* ------------------------------------------------------------- chrome */
+  #brand { position:fixed; z-index:10; left:18px; top:16px; pointer-events:none; }
+  #brand b { display:block; font-family:var(--hd); font-size:17px; letter-spacing:.2em; color:#fff;
+    text-shadow:0 0 16px var(--pink); }
+  #brand span { font-size:11px; letter-spacing:.26em; opacity:.5; }
+  #help { position:fixed; z-index:10; right:18px; bottom:16px; font-size:11.5px;
+    letter-spacing:.13em; opacity:.45; text-align:right; pointer-events:none; line-height:1.7; }
+  #back { position:fixed; z-index:13; left:50%; bottom:20px; transform:translateX(-50%);
+    display:none; padding:11px 26px; font-family:var(--hd); font-size:13px; letter-spacing:.18em;
+    color:#fff; background:rgba(10,7,18,.9); border:1px solid var(--pink); border-radius:999px;
+    box-shadow:0 0 24px rgba(255,23,195,.4); cursor:pointer; }
+  body.docked #back { display:block; }
+  body.bare #brand, body.bare #help, body.bare #prompt { display:none; }
+  body.bare #boot { display:none; }
+
+  #credit { position:fixed; z-index:10; left:18px; bottom:14px; font-size:10px;
+    letter-spacing:.14em; opacity:.34; pointer-events:auto; }
+  #credit a { color:inherit; text-decoration:none; border-bottom:1px solid rgba(223,228,255,.25); }
+  #credit a:hover { opacity:1; color:#00c7fe; }
+  body.bare #credit { display:none; }
+
+  #stats { position:fixed; z-index:14; right:16px; top:14px; display:none; padding:9px 12px;
+    font:11px/1.6 ui-monospace,Menlo,monospace; white-space:pre; color:#9fe6ff;
+    background:rgba(6,5,14,.85); border:1px solid rgba(0,199,254,.3); border-radius:7px; }
+
+  /* ------------------------------------------------------- touch controls */
+  #stick { position:fixed; z-index:12; width:118px; height:118px; margin:-59px 0 0 -59px;
+    border-radius:50%; border:2px solid rgba(0,199,254,.45); pointer-events:none;
+    background:radial-gradient(circle,rgba(0,199,254,.10),transparent 68%);
+    opacity:0; transition:opacity .12s; }
+  #stick.on { opacity:1; }
+  #stick i { position:absolute; left:50%; top:50%; width:46px; height:46px; margin:-23px 0 0 -23px;
+    border-radius:50%; background:rgba(0,199,254,.30); border:1px solid rgba(0,199,254,.8);
+    box-shadow:0 0 18px rgba(0,199,254,.5); }
+  #touchhint { position:fixed; z-index:10; left:50%; bottom:26px; transform:translateX(-50%);
+    display:none; padding:9px 18px; font-size:11.5px; letter-spacing:.2em; text-align:center;
+    color:#cfe0ff; background:rgba(8,6,16,.7); border:1px solid rgba(0,199,254,.3);
+    border-radius:999px; pointer-events:none; transition:opacity .8s; }
+  body.touch #touchhint { display:block; }
+  body.touch #help { display:none; }
+  body.touch.moved #touchhint, body.docked #touchhint { opacity:0; }
+
+  @media (pointer:coarse) {
+    #help { display:none; }
+    #prompt { transform:translate(-50%,-160%); padding:11px 20px; }
+    #prompt .title { font-size:15px; }
+  }
+</style>
+
+<div id="app"></div>
+
+<div id="boot">
+  <h1>RCADIA</h1>
+  <div class="bar"><i></i></div>
+  <p>entering the arcade</p>
+</div>
+
+<div id="dot"></div>
+<div id="brand"><b>RCADIA</b><span>XRPL ARCADE</span></div>
+<div id="prompt"><div class="title"></div><div class="hint"></div></div>
+<div id="help">
+  W A S D &nbsp;/&nbsp; ARROWS TO WALK<br>
+  DRAG TO LOOK &nbsp;·&nbsp; SHIFT TO RUN<br>
+  E TO PLAY &nbsp;·&nbsp; ESC TO STEP BACK
+</div>
+<div id="stick"><i></i></div>
+<div id="touchhint">DRAG LEFT TO WALK · DRAG RIGHT TO LOOK · TAP A CABINET TO PLAY</div>
+<div id="credit">CABINET &amp; TABLE MODELS ·
+  <a href="https://poly.pizza" target="_blank" rel="noopener">POLY.PIZZA</a> ·
+  J-TOASTIE, DANNI BITTMAN, EVOL-LOVE · CC-BY 3.0</div>
+<button id="back">← BACK TO THE FLOOR</button>
+<pre id="stats"></pre>
+
+<script>
+  if (matchMedia('(pointer: coarse)').matches) document.body.classList.add('coarse');
+  // Headless screenshots are the main way this scene gets looked at, and a
+  // console nobody reads is where a boot failure goes to hide. Put it on screen.
+  (function () {
+    var show = function (msg) {
+      var b = document.getElementById('boot');
+      if (!b) return;
+      b.innerHTML = '<h1 style="color:#ff5f8f;text-shadow:0 0 20px #ff174d;font-size:22px">BOOT FAILED</h1>'
+        + '<pre style="max-width:min(1100px,88vw);white-space:pre-wrap;text-align:left;'
+        + 'font:12px/1.6 ui-monospace,Menlo,monospace;color:#ffb3c8;opacity:.9">'
+        + String(msg).replace(/[<&]/g, function (c) { return c === '<' ? '&lt;' : '&amp;'; }) + '</pre>';
+      document.body.classList.remove('ready');
+      b.style.opacity = 1;
+    };
+    addEventListener('error', function (e) { show((e.error && e.error.stack) || e.message); });
+    addEventListener('unhandledrejection', function (e) {
+      show((e.reason && e.reason.stack) || e.reason);
+    });
+  })();
+</script>
+<script>/*BUNDLE*/</script>

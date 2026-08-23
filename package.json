@@ -1,0 +1,16 @@
+{
+  "name": "rcadia-arcade",
+  "version": "0.1.0",
+  "description": "RCADIA — 3D virtual arcade. Phase 1: procedural cabinet in isolation.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "./build.sh",
+    "start": "python3 -m http.server 8299 -d dist",
+    "shot": "./scripts/shot.sh"
+  },
+  "dependencies": {
+    "esbuild": "^0.28.1",
+    "three": "^0.185.1"
+  }
+}
