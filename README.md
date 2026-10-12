@@ -1,5 +1,7 @@
 # RCADIA — a walkable XRPL arcade
 
+> Build needs Node 18+ and `rsync`.
+
 A 3D arcade you walk around, where **every cabinet plays the real game** hosted on
 rcadia.xyz. Twenty-three machines, an XRP hero sign, a lounge, and a carpet that
 has no business being this accurate.

@@ -9,7 +9,11 @@ set -e
 cd "$(dirname "$0")"
 [ -d node_modules ] || npm i --no-audit --no-fund
 mkdir -p dist
-rsync -a --delete assets dist/
+if command -v rsync >/dev/null 2>&1; then
+  rsync -a --delete assets dist/
+else                # no rsync: same result, a fresh copy of assets
+  rm -rf dist/assets && cp -a assets dist/
+fi
 
 page () {           # page <entry.js> <shell.html> <out.html> <title>
   npx esbuild "src/$1" --bundle --format=iife --outfile=dist/.bundle.js --log-level=warning
